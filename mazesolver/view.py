@@ -15,6 +15,11 @@ BLOCK_SIZE = 64
 TEXTURE_WALL = ":resources:images/topdown_tanks/tileGrass1.png"
 TEXTURE_PATH = ":resources:images/topdown_tanks/tileSand1.png"
 
+FLAG_START = ":resources:images/items/flagRed1.png"
+FLAG_STOP = ":resources:images/items/flagGreen2.png"
+
+FLAG_SCALE = 0.16
+
 
 class BlockType:
     WALL = 0
@@ -30,8 +35,14 @@ class View(arc.View):
 
         self.walls = None
         self.path = None
+
+        self.flags = None
+        self.flag_start = None
+        self.flag_stop = None
+
         self.actors = None
         self.player = None
+
         self.physics_engine = None
 
     def setup(self):
@@ -41,12 +52,21 @@ class View(arc.View):
         self.walls = arc.SpriteList(use_spatial_hash=True)
         self.path = arc.SpriteList(use_spatial_hash=True)
 
+        self.setup_maze()
+
+        self.flags = arc.SpriteList(use_spatial_hash=True)
+        self.flag_start = arc.Sprite(FLAG_START, scale=FLAG_SCALE)
+        self.flags.append(self.flag_start)
+        self.flag_stop = arc.Sprite(FLAG_STOP, scale=FLAG_SCALE)
+        self.flags.append(self.flag_stop)
+
+        self.set_flag_points()
+
         self.actors = arc.SpriteList()
 
         self.player = Player(scale=self.grid.scale)
         self.actors.append(self.player)
 
-        self.setup_maze()
         self.spawn_player()
 
         self.physics_engine = arc.PhysicsEngineSimple(self.player, self.walls)
@@ -72,13 +92,24 @@ class View(arc.View):
                 block.center_x, block.center_y = center_x, center_y
 
     def spawn_player(self):
-        self.player.center_x, self.player.center_y = self.grid.center_of(1, 1)
+        self.player.center_x, self.player.center_y = self.grid.center_of(
+            *self.grid.start_point()
+        )
+
+    def set_flag_points(self):
+        self.flag_start.center_x, self.flag_start.center_y = self.grid.center_of(
+            *self.grid.start_point()
+        )
+        self.flag_stop.center_x, self.flag_stop.center_y = self.grid.center_of(
+            *self.grid.stop_point()
+        )
 
     def on_draw(self):
         self.clear()
 
         self.walls.draw()
         self.path.draw()
+        self.flags.draw()
         self.actors.draw()
 
     def on_update(self, delta_time):
@@ -94,6 +125,8 @@ class View(arc.View):
             self.player.move_left()
         elif key == arc.key.RIGHT:
             self.player.move_right()
+        elif key == arc.key.R:
+            self.setup()
 
     def on_key_release(self, key, modifiers):
         if key == arc.key.UP or key == arc.key.DOWN:

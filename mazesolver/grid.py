@@ -11,7 +11,7 @@ class Grid:
 
         self.rows, self.columns = shape
         self.real_block_size = block_size * scale
-        self.height, self.width = (self.real_block_size * mag for mag in shape)
+        self.height, self.width = (self.real_block_size * mag for mag in self.shape)
 
         self.begin = (SCREEN_WIDTH - self.width) / 2, (SCREEN_HEIGHT + self.height) / 2
 
@@ -22,6 +22,16 @@ class Grid:
         return self.rows
 
     def center_of(self, r, c):
-        center_x = self.begin[0] + (c * self.real_block_size) + (self.real_block_size / 2)
-        center_y = self.begin[1] - (r * self.real_block_size) - (self.real_block_size / 2)
+        center_x = (
+            self.begin[0] + (c * self.real_block_size) + (self.real_block_size / 2)
+        )
+        center_y = (
+            self.begin[1] - (r * self.real_block_size) - (self.real_block_size / 2)
+        )
         return center_x, center_y
+
+    def start_point(self):
+        return 1, 1
+
+    def stop_point(self):
+        return (mag - 2 for mag in self.shape)
