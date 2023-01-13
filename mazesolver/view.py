@@ -46,6 +46,8 @@ class View(arc.View):
         self.physics_engine = None
 
     def setup(self):
+        arc.set_background_color(arc.color.ALMOND)
+        
         self.maze = Maze.generate(RAW_MAZE_SHAPE, seed=int(time.time()))
         self.grid = Grid(self.maze.shape, BLOCK_SIZE, SCALE)
 
