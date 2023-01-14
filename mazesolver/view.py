@@ -20,6 +20,9 @@ FLAG_STOP = ":resources:images/items/flagGreen2.png"
 
 FLAG_SCALE = 0.16
 
+TANK_BLUE = ":resources:images/topdown_tanks/tank_blue.png"
+TANK_RED = ":resources:images/topdown_tanks/tank_red.png"
+
 
 class BlockType:
     WALL = 0
@@ -29,6 +32,8 @@ class BlockType:
 class View(arc.View):
     def __init__(self, window=None):
         super().__init__(window)
+
+        self.active = None
 
         self.maze = None
         self.grid = None
@@ -47,7 +52,9 @@ class View(arc.View):
 
     def setup(self):
         arc.set_background_color(arc.color.ALMOND)
-        
+
+        self.active = True
+
         self.maze = Maze.generate(RAW_MAZE_SHAPE, seed=int(time.time()))
         self.grid = Grid(self.maze.shape, BLOCK_SIZE, SCALE)
 
@@ -66,12 +73,17 @@ class View(arc.View):
 
         self.actors = arc.SpriteList()
 
-        self.player = Player(scale=self.grid.scale)
+        self.player = Player(TANK_BLUE, scale=self.grid.scale)
         self.actors.append(self.player)
+        self.computer = Player(TANK_RED, scale=self.grid.scale)
+        self.actors.append(self.computer)
 
-        self.spawn_player()
+        self.spawn_actors()
 
-        self.physics_engine = arc.PhysicsEngineSimple(self.player, self.walls)
+        self.physics_engine_player = arc.PhysicsEngineSimple(self.player, self.walls)
+        self.physics_engine_computer = arc.PhysicsEngineSimple(
+            self.computer, self.walls
+        )
 
     def setup_maze(self):
         SCREEN_WIDTH, SCREEN_HEIGHT = arc.get_window().get_size()
@@ -93,10 +105,9 @@ class View(arc.View):
                     self.path.append(block)
                 block.center_x, block.center_y = center_x, center_y
 
-    def spawn_player(self):
-        self.player.center_x, self.player.center_y = self.grid.center_of(
-            *self.grid.start_point()
-        )
+    def spawn_actors(self):
+        self.player.move_to(self.grid.center_of(*self.grid.start_point()))
+        self.computer.move_to(self.grid.center_of(*self.grid.start_point()))
 
     def set_flag_points(self):
         self.flag_start.center_x, self.flag_start.center_y = self.grid.center_of(
@@ -115,8 +126,12 @@ class View(arc.View):
         self.actors.draw()
 
     def on_update(self, delta_time):
-        self.actors.update()
-        self.physics_engine.update()
+        if self.active:
+            self.actors.update()
+            self.physics_engine_player.update()
+            self.physics_engine_computer.update()
+
+            collisions = arc.check_for_collision_with_list(self.flag_stop, self.actors)
 
     def on_key_press(self, key, modifiers):
         if key == arc.key.UP:
@@ -130,8 +145,22 @@ class View(arc.View):
         elif key == arc.key.R:
             self.setup()
 
+        if key == arc.key.W:
+            self.computer.move_up()
+        elif key == arc.key.S:
+            self.computer.move_down()
+        elif key == arc.key.A:
+            self.computer.move_left()
+        elif key == arc.key.D:
+            self.computer.move_right()
+
     def on_key_release(self, key, modifiers):
         if key == arc.key.UP or key == arc.key.DOWN:
             self.player.change_y = 0
         elif key == arc.key.LEFT or key == arc.key.RIGHT:
             self.player.change_x = 0
+
+        if key == arc.key.W or key == arc.key.S:
+            self.computer.change_y = 0
+        elif key == arc.key.A or key == arc.key.D:
+            self.computer.change_x = 0

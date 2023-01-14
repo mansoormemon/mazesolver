@@ -1,7 +1,6 @@
 import arcade as arc
 
 
-PLAYER_SKIN = ":resources:images/topdown_tanks/tank_blue.png"
 MOVEMENT_SPEED = 2
 
 
@@ -12,11 +11,14 @@ FACE_RIGHT = 90
 
 
 class Player(arc.Sprite):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, skin, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.texture = arc.load_texture(PLAYER_SKIN)
+        self.texture = arc.load_texture(skin)
         self.textures.append(self.texture)
+
+    def move_to(self, coords):
+        self.center_x, self.center_y = coords
 
     def move_up(self):
         self.change_y = MOVEMENT_SPEED

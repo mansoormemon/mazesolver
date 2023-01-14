@@ -22,12 +22,9 @@ class Grid:
         return self.rows
 
     def center_of(self, r, c):
-        center_x = (
-            self.begin[0] + (c * self.real_block_size) + (self.real_block_size / 2)
-        )
-        center_y = (
-            self.begin[1] - (r * self.real_block_size) - (self.real_block_size / 2)
-        )
+        begin_x, begin_y = self.begin
+        center_x = begin_x + (c * self.real_block_size) + (self.real_block_size / 2)
+        center_y = begin_y - (r * self.real_block_size) - (self.real_block_size / 2)
         return center_x, center_y
 
     def start_point(self):
