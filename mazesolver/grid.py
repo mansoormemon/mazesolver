@@ -32,3 +32,9 @@ class Grid:
 
     def stop_point(self):
         return (mag - 2 for mag in self.shape)
+
+    def get_location(self, x, y):
+        begin_x, begin_y = self.begin
+        return begin_x + (self.real_block_size * (x + 0.5)), begin_y - (
+            self.real_block_size * (y + 0.5)
+        )

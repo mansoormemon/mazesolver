@@ -81,3 +81,47 @@ class Maze:
             maze_map[min_x : max_x + 1, min_y : max_y + 1] = 1
 
         return maze_map
+
+    @staticmethod
+    def solve(maze):
+        rows, cols = maze.shape
+
+        def is_in_bounds(x, y):
+            return (
+                x >= 0 and x < cols - 1 and y >= 0 and y < rows - 1 and maze[y][x] == 1
+            )
+
+        def attemt_solve(maze, x, y, sol):
+            if x == cols - 2 and y == rows - 2:
+                sol[y][x] = 1
+                return True
+
+            if is_in_bounds(x, y):
+                if sol[y][x] == 1:
+                    return False
+
+                sol[y][x] = 1
+                if attemt_solve(maze, x + DX[E], y, sol):
+                    return True
+
+                if attemt_solve(maze, x, y + DY[S], sol):
+                    return True
+
+                if attemt_solve(maze, x + DX[W], y, sol):
+                    return True
+
+                if attemt_solve(maze, x, y + DY[N], sol):
+                    return True
+
+                sol[y][x] = 0
+                return False
+
+        path = np.zeros_like(maze)
+        if not attemt_solve(maze, 1, 1, path):
+            return False
+        for r in path:
+            for c in r:
+                print(c, end=" ")
+            print()
+
+        return path[::-1]

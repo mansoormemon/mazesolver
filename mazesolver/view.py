@@ -1,4 +1,3 @@
-import enum
 import time
 
 import arcade as arc
@@ -22,6 +21,13 @@ FLAG_SCALE = 0.16
 
 TANK_BLUE = ":resources:images/topdown_tanks/tank_blue.png"
 TANK_RED = ":resources:images/topdown_tanks/tank_red.png"
+
+
+PLAYER_NAME = "Player"
+COMPUTER_NAME = "Computer"
+
+PLAYER_SPEED = 2
+COMPUTER_SPEED = 1.6
 
 
 class BlockType:
@@ -56,6 +62,7 @@ class View(arc.View):
         self.active = True
 
         self.maze = Maze.generate(RAW_MAZE_SHAPE, seed=int(time.time()))
+        self.solution = Maze.solve(self.maze)
         self.grid = Grid(self.maze.shape, BLOCK_SIZE, SCALE)
 
         self.walls = arc.SpriteList(use_spatial_hash=True)
@@ -73,9 +80,13 @@ class View(arc.View):
 
         self.actors = arc.SpriteList()
 
-        self.player = Player(TANK_BLUE, scale=self.grid.scale)
+        self.player = Player(
+            PLAYER_NAME, TANK_BLUE, PLAYER_SPEED, scale=self.grid.scale
+        )
         self.actors.append(self.player)
-        self.computer = Player(TANK_RED, scale=self.grid.scale)
+        self.computer = Player(
+            COMPUTER_NAME, TANK_RED, COMPUTER_SPEED, scale=self.grid.scale
+        )
         self.actors.append(self.computer)
 
         self.spawn_actors()
@@ -117,6 +128,10 @@ class View(arc.View):
             *self.grid.stop_point()
         )
 
+    def auto_play(self, computer):
+        if self.active:
+            pass
+
     def on_draw(self):
         self.clear()
 
@@ -125,13 +140,24 @@ class View(arc.View):
         self.flags.draw()
         self.actors.draw()
 
+        for r, row in enumerate(self.solution):
+            for c, col in enumerate(row):
+                if col:
+                    arc.draw_point(*self.grid.center_of(r, c), arc.color.RED, 3)
+
     def on_update(self, delta_time):
         if self.active:
+            self.auto_play(self.computer)
+
             self.actors.update()
             self.physics_engine_player.update()
             self.physics_engine_computer.update()
 
             collisions = arc.check_for_collision_with_list(self.flag_stop, self.actors)
+            if collisions:
+                winner, *_ = collisions
+                self.active = False
+                winner.move_to(self.grid.center_of(*self.grid.stop_point()))
 
     def on_key_press(self, key, modifiers):
         if key == arc.key.UP:
@@ -145,22 +171,8 @@ class View(arc.View):
         elif key == arc.key.R:
             self.setup()
 
-        if key == arc.key.W:
-            self.computer.move_up()
-        elif key == arc.key.S:
-            self.computer.move_down()
-        elif key == arc.key.A:
-            self.computer.move_left()
-        elif key == arc.key.D:
-            self.computer.move_right()
-
     def on_key_release(self, key, modifiers):
         if key == arc.key.UP or key == arc.key.DOWN:
             self.player.change_y = 0
         elif key == arc.key.LEFT or key == arc.key.RIGHT:
             self.player.change_x = 0
-
-        if key == arc.key.W or key == arc.key.S:
-            self.computer.change_y = 0
-        elif key == arc.key.A or key == arc.key.D:
-            self.computer.change_x = 0
