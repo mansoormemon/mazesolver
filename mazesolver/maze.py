@@ -92,7 +92,7 @@ class Maze:
             )
 
         def attemt_solve(maze, x, y, sol):
-            if x == cols - 2 and y == rows - 2:
+            if x == cols - 2 and y == 1:
                 sol[y][x] = 1
                 return True
 
@@ -117,7 +117,7 @@ class Maze:
                 return False
 
         path = np.zeros_like(maze)
-        if not attemt_solve(maze, 1, 1, path):
+        if not attemt_solve(maze, 1, rows - 2, path):
             return False
         for r in path:
             for c in r:

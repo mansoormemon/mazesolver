@@ -158,6 +158,7 @@ class View(arc.View):
                 winner, *_ = collisions
                 self.active = False
                 winner.move_to(self.grid.center_of(*self.grid.stop_point()))
+                print(winner.name, "won!")
 
     def on_key_press(self, key, modifiers):
         if key == arc.key.UP:
