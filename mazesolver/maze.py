@@ -119,9 +119,7 @@ class Maze:
         path = np.zeros_like(maze)
         if not attemt_solve(maze, 1, rows - 2, path):
             return False
-        for r in path:
-            for c in r:
-                print(c, end=" ")
-            print()
 
-        return path[::-1]
+        vf_path = path[::-1]
+
+        return vf_path

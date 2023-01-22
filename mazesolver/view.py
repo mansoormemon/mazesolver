@@ -23,11 +23,10 @@ TANK_BLUE = ":resources:images/topdown_tanks/tank_blue.png"
 TANK_RED = ":resources:images/topdown_tanks/tank_red.png"
 
 
-PLAYER_NAME = "Player"
-COMPUTER_NAME = "Computer"
+PLAYER_1_NAME = "Blue"
+PLAYER_2_NAME = "Red"
 
 PLAYER_SPEED = 2
-COMPUTER_SPEED = 1.6
 
 
 class BlockType:
@@ -40,6 +39,8 @@ class View(arc.View):
         super().__init__(window)
 
         self.active = None
+        self.enable_help = None
+        self.bot_previous_coords = None
 
         self.maze = None
         self.grid = None
@@ -52,14 +53,19 @@ class View(arc.View):
         self.flag_stop = None
 
         self.actors = None
-        self.player = None
+        self.player_1 = None
+        self.player_2 = None
 
-        self.physics_engine = None
+        self.physics_engine_1 = None
+        self.physics_engine_2 = None
+
+        self.win_label = None
 
     def setup(self):
         arc.set_background_color(arc.color.ALMOND)
 
         self.active = True
+        self.enable_help = False
 
         self.maze = Maze.generate(RAW_MAZE_SHAPE, seed=int(time.time()))
         self.solution = Maze.solve(self.maze)
@@ -80,21 +86,21 @@ class View(arc.View):
 
         self.actors = arc.SpriteList()
 
-        self.player = Player(
-            PLAYER_NAME, TANK_BLUE, PLAYER_SPEED, scale=self.grid.scale
+        self.player_1 = Player(
+            PLAYER_1_NAME, TANK_BLUE, PLAYER_SPEED, scale=self.grid.scale
         )
-        self.actors.append(self.player)
-        self.computer = Player(
-            COMPUTER_NAME, TANK_RED, COMPUTER_SPEED, scale=self.grid.scale
+        self.actors.append(self.player_1)
+        self.player_2 = Player(
+            PLAYER_2_NAME, TANK_RED, PLAYER_SPEED, scale=self.grid.scale
         )
-        self.actors.append(self.computer)
+        self.actors.append(self.player_2)
 
         self.spawn_actors()
 
-        self.physics_engine_player = arc.PhysicsEngineSimple(self.player, self.walls)
-        self.physics_engine_computer = arc.PhysicsEngineSimple(
-            self.computer, self.walls
-        )
+        self.physics_engine_1 = arc.PhysicsEngineSimple(self.player_1, self.walls)
+        self.physics_engine_2 = arc.PhysicsEngineSimple(self.player_2, self.walls)
+
+        self.win_label = None
 
     def setup_maze(self):
         SCREEN_WIDTH, SCREEN_HEIGHT = arc.get_window().get_size()
@@ -117,8 +123,8 @@ class View(arc.View):
                 block.center_x, block.center_y = center_x, center_y
 
     def spawn_actors(self):
-        self.player.move_to(self.grid.center_of(*self.grid.start_point()))
-        self.computer.move_to(self.grid.center_of(*self.grid.start_point()))
+        self.player_1.move_to(self.grid.center_of(*self.grid.start_point()))
+        self.player_2.move_to(self.grid.center_of(*self.grid.start_point()))
 
     def set_flag_points(self):
         self.flag_start.center_x, self.flag_start.center_y = self.grid.center_of(
@@ -128,52 +134,76 @@ class View(arc.View):
             *self.grid.stop_point()
         )
 
-    def auto_play(self, computer):
-        if self.active:
-            pass
-
     def on_draw(self):
         self.clear()
 
         self.walls.draw()
         self.path.draw()
         self.flags.draw()
-        self.actors.draw()
 
-        for r, row in enumerate(self.solution):
-            for c, col in enumerate(row):
-                if col:
-                    arc.draw_point(*self.grid.center_of(r, c), arc.color.RED, 3)
+        if self.enable_help:
+            for r, row in enumerate(self.solution):
+                for c, col in enumerate(row):
+                    if col:
+                        arc.draw_point(*self.grid.center_of(r, c), arc.color.RED, 3)
+
+        self.actors.draw()
+        if self.win_label is not None:
+            self.win_label.draw()
 
     def on_update(self, delta_time):
         if self.active:
-            self.auto_play(self.computer)
-
+            SCREEN_WIDTH, SCREEN_HEIGHT = arc.get_window().get_size()
             self.actors.update()
-            self.physics_engine_player.update()
-            self.physics_engine_computer.update()
+            self.physics_engine_1.update()
+            self.physics_engine_2.update()
 
             collisions = arc.check_for_collision_with_list(self.flag_stop, self.actors)
             if collisions:
                 winner, *_ = collisions
                 self.active = False
                 winner.move_to(self.grid.center_of(*self.grid.stop_point()))
-                print(winner.name, "won!")
+                self.win_label = arc.Text(
+                    f"{winner.name} won!",
+                    start_x=SCREEN_WIDTH / 2,
+                    start_y=SCREEN_HEIGHT * 0.95,
+                    anchor_x="center",
+                    anchor_y="center",
+                    font_name="Kenney Mini Square",
+                    font_size=32,
+                    color=arc.color.WINE_DREGS,
+                )
 
     def on_key_press(self, key, modifiers):
         if key == arc.key.UP:
-            self.player.move_up()
+            self.player_1.move_up()
         elif key == arc.key.DOWN:
-            self.player.move_down()
+            self.player_1.move_down()
         elif key == arc.key.LEFT:
-            self.player.move_left()
+            self.player_1.move_left()
         elif key == arc.key.RIGHT:
-            self.player.move_right()
+            self.player_1.move_right()
         elif key == arc.key.R:
             self.setup()
+        elif key == arc.key.H:
+            self.enable_help = True
+        elif key == arc.key.A:
+            self.player_2.move_left()
+        elif key == arc.key.D:
+            self.player_2.move_right()
+        elif key == arc.key.W:
+            self.player_2.move_up()
+        elif key == arc.key.S:
+            self.player_2.move_down()
 
     def on_key_release(self, key, modifiers):
         if key == arc.key.UP or key == arc.key.DOWN:
-            self.player.change_y = 0
+            self.player_1.change_y = 0
         elif key == arc.key.LEFT or key == arc.key.RIGHT:
-            self.player.change_x = 0
+            self.player_1.change_x = 0
+        elif key == arc.key.H:
+            self.enable_help = False
+        elif key == arc.key.A or key == arc.key.D:
+            self.player_2.change_x = 0
+        elif key == arc.key.W or key == arc.key.S:
+            self.player_2.change_y = 0

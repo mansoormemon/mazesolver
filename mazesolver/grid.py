@@ -38,3 +38,8 @@ class Grid:
         return begin_x + (self.real_block_size * (x + 0.5)), begin_y - (
             self.real_block_size * (y + 0.5)
         )
+
+    def get_coords(self, x, y):
+        begin_x, begin_y = self.begin
+        dx, dy = x - begin_x, begin_y - y
+        return int(dx // self.real_block_size), int(dy // self.real_block_size)
