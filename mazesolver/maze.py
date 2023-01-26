@@ -20,7 +20,7 @@ class DisjointSet:
         self.node_map = {}
 
         for i, value in enumerate(nodes):
-            n: Node = Node(value, i)
+            n = Node(value, i)
             self.node_map[value] = n
 
     def find_parent(self, node):
@@ -30,7 +30,7 @@ class DisjointSet:
         if type(self.node_map[node].parent) is int:
             return self.node_map[node]
         else:
-            parent_node: Node = self.find_node(self.node_map[node].parent.value)
+            parent_node = self.find_node(self.node_map[node].parent.value)
             self.node_map[node].parent = parent_node
             return parent_node
 
